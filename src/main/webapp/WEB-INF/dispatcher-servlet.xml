@@ -1,0 +1,78 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <!-- Сканирует путь для аннотированных компонентов, которые будут автоматически зарегистрированы как Spring beans.
+    Например, @Controller и @Service -->
+    <context:component-scan base-package="bookcatalog"/>
+
+    <!-- Настраивает управляемую аннотацией модель программирования Spring MVC Controller.
+    Обратите внимание, что с Spring 3.0 этот тег работает только в Servlet MVC! -->
+    <mvc:annotation-driven/>
+
+    <!--spring dispatcher will forward all requests to the default Servlet-->
+    <mvc:default-servlet-handler/>
+
+
+
+
+
+    <!-- View resolver будет реализован по адресу /WEB-INF/pages/*.jsp -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/pages/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+
+
+
+
+
+    <!-- База Данных -->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+          destroy-method="close">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url"
+                  value="jdbc:mysql://localhost:3306/test"/>
+        <property name="username" value="root"/>
+        <property name="password" value="root"/>
+    </bean>
+
+    <!-- Объявление Hibernate SessionFactory для получения Hibernate session-->
+    <bean id="sessionFactory"
+          class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="annotatedClasses">
+            <list>
+                <value>bookcatalog.model.Book</value>
+            </list>
+        </property>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+                <prop key="hibernate.show_sql">true</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!--BookDao and BookService beans-->
+    <bean id="bookDao" class="bookcatalog.dao.BookDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <bean id="bookService" class="bookcatalog.service.BookServiceImpl">
+        <property name="bookDao" ref="bookDao"/>
+    </bean>
+
+    <!-- Включить стиль аннотаций для управления транзакциями
+         Объявление transaction Manager -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+</beans>
